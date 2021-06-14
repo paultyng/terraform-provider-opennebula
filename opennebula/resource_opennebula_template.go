@@ -272,9 +272,24 @@ func resourceOpennebulaTemplateRead(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	err = flattenTemplate(d, &tpl.Template, true)
+	err = flattenTemplate(d, &tpl.Template)
 	if err != nil {
 		return err
+	}
+
+
+	if tagsInterface, ok := d.GetOk("tags"); ok {
+
+		tags, err := flattenTags(tagsInterface.(map[string]interface{}), &tpl.Template.Template)
+		if err != nil {
+			return err
+		}
+		if len(tags) > 0 {
+			err := d.Set("tags", tags)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

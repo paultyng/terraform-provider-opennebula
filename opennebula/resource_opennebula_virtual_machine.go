@@ -492,14 +492,23 @@ func resourceOpennebulaVirtualMachineReadCustom(d *schema.ResourceData, meta int
 		return err
 	}
 
-	err = flattenTemplate(d, &vm.Template, false)
+	err = flattenTemplate(d, &vm.Template)
 	if err != nil {
 		return err
 	}
 
-	err = flattenTags(d, &vm.UserTemplate)
-	if err != nil {
-		return err
+	if tagsInterface, ok := d.GetOk("tags"); ok {
+
+		tags, err := flattenTags(tagsInterface.(map[string]interface{}), &vm.UserTemplate.Template)
+		if err != nil {
+			return err
+		}
+		if len(tags) > 0 {
+			err := d.Set("tags", tags)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -717,34 +726,6 @@ NICLoop:
 			return err
 		}
 	}
-	return nil
-}
-
-func flattenTags(d *schema.ResourceData, vmUserTpl *vm.UserTemplate) error {
-
-	tags := make(map[string]interface{})
-	for i, _ := range vmUserTpl.Elements {
-		pair, ok := vmUserTpl.Elements[i].(*dyn.Pair)
-		if !ok {
-			continue
-		}
-
-		// Get only tags from userTemplate
-		tagsInterface := d.Get("tags").(map[string]interface{})
-		for k, _ := range tagsInterface {
-			if strings.ToUpper(k) == pair.Key() {
-				tags[k] = pair.Value
-			}
-		}
-	}
-
-	if len(tags) > 0 {
-		err := d.Set("tags", tags)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
