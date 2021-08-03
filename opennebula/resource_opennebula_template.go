@@ -48,6 +48,36 @@ func resourceOpennebulaTemplate() *schema.Resource {
 			"os":       osSchema(),
 			"vmgroup":  vmGroupSchema(),
 			"tags":     tagsSchema(),
+			"raw": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Low-level hypervisor tuning",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+								validtypes := []string{"kvm", "lxd", "vmware"}
+								value := v.(string)
+
+								if inArray(value, validtypes) < 0 {
+									errors = append(errors, fmt.Errorf("Type %q must be one of: %s", k, strings.Join(validtypes, ",")))
+								}
+
+								return
+							},
+							Description: "Name of the hypervisor: kvm, lxd, vmware",
+						},
+						"data": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Low-level data to pass to the hypervisor",
+						},
+					},
+				},
+			},
 			"permissions": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -272,9 +302,44 @@ func resourceOpennebulaTemplateRead(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	err = flattenTemplate(d, &tpl.Template, true)
+	err = flattenTemplate(d, &tpl.Template)
 	if err != nil {
 		return err
+	}
+
+	rawVec, _ := tpl.Template.GetVector("RAW")
+	if rawVec != nil {
+
+		rawMap := make([]map[string]interface{}, 0, 1)
+
+		hypType, _ := rawVec.GetStr("TYPE")
+		data, _ := rawVec.GetStr("DATA")
+
+		rawMap = append(rawMap, map[string]interface{}{
+			"type": hypType,
+			"data": data,
+		})
+
+		if _, ok := d.GetOk("raw"); ok {
+			err = d.Set("raw", rawMap)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if tagsInterface, ok := d.GetOk("tags"); ok {
+
+		tags, err := flattenTags(tagsInterface.(map[string]interface{}), &tpl.Template.Template)
+		if err != nil {
+			return err
+		}
+		if len(tags) > 0 {
+			err := d.Set("tags", tags)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -399,6 +464,15 @@ func generateTemplate(d *schema.ResourceData) (string, error) {
 	}
 
 	generateVMTemplate(d, tpl)
+
+	//Generate RAW definition
+	raw := d.Get("raw").([]interface{})
+	for i := 0; i < len(raw); i++ {
+		rawConfig := raw[i].(map[string]interface{})
+		rawVec := tpl.AddVector("RAW")
+		rawVec.AddPair("TYPE", rawConfig["type"].(string))
+		rawVec.AddPair("DATA", rawConfig["data"].(string))
+	}
 
 	tplStr := tpl.String()
 	log.Printf("[INFO] Template definitions: %s", tplStr)
