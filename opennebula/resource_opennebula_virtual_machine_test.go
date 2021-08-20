@@ -186,11 +186,21 @@ func TestAccVirtualMachineNICUpdate(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccVirtualMachineTemplateConfigNICsSameVNet,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "name", "test-virtual_machine"),
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.#", "2"),
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.0.computed_ip", "172.16.100.131"),
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.1.computed_ip", "172.16.100.132"),
+				),
+			},
+			{
 				Config: testAccVirtualMachineTemplateConfigNICUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "name", "test-virtual_machine"),
-					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.#", "1"),
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.#", "2"),
 					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.0.computed_ip", "172.16.100.111"),
+					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "nic.1.computed_ip", "172.16.100.131"),
 				),
 			},
 			{
@@ -886,6 +896,49 @@ resource "opennebula_virtual_machine" "test" {
 }
 `
 
+var testAccVirtualMachineTemplateConfigNICsSameVNet = testNICVNetResources + `
+
+resource "opennebula_virtual_machine" "test" {
+	name        = "test-virtual_machine"
+	group       = "oneadmin"
+	permissions = "642"
+	memory = 128
+	cpu = 0.1
+
+	context = {
+	  NETWORK  = "YES"
+	  SET_HOSTNAME = "$NAME"
+	}
+
+	graphics {
+	  type   = "VNC"
+	  listen = "0.0.0.0"
+	  keymap = "en-us"
+	}
+
+	os {
+	  arch = "x86_64"
+	  boot = ""
+	}
+
+	tags = {
+	  env = "prod"
+	  customer = "test"
+	}
+
+	nic {
+		network_id = opennebula_virtual_network.network1.id
+		ip = "172.16.100.131"
+	}
+	nic {
+		network_id = opennebula_virtual_network.network1.id
+		ip = "172.16.100.132"
+	}
+
+	timeout = 5
+}
+`
+
 var testAccVirtualMachineTemplateConfigNICUpdate = testNICVNetResources + `
 
   resource "opennebula_virtual_machine" "test" {
@@ -916,6 +969,10 @@ var testAccVirtualMachineTemplateConfigNICUpdate = testNICVNetResources + `
 		customer = "test"
 	  }
 
+	  nic {
+		network_id = opennebula_virtual_network.network1.id
+		ip = "172.16.100.131"
+	  }
 	  nic {
 		  network_id = opennebula_virtual_network.network2.id
 		  ip = "172.16.100.111"
@@ -955,6 +1012,10 @@ var testAccVirtualMachineTemplateConfigNICIPUpdate = testNICVNetResources + `
 		customer = "test"
 	  }
 
+	  nic {
+		network_id = opennebula_virtual_network.network1.id
+		ip = "172.16.100.131"
+	  }
 	  nic {
 		  network_id = opennebula_virtual_network.network2.id
 		  ip = "172.16.100.112"
