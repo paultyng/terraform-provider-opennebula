@@ -1,3 +1,9 @@
+
+## 0.4.0 (Unreleased)
+
+BUG FIXES:
+* resources/opennebula_virtual_machine: Fix several disks attached to the same images
+
 ## 0.3.0 (December 17, 2020)
 
 FEATURES:
