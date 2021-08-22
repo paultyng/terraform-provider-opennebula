@@ -1,3 +1,8 @@
+## 0.4.0 (Unreleased)
+
+BUG FIXES:
+* resources/opennebula_security_group_: Fix rule conversion from struct to config
+
 ## 0.3.0 (December 17, 2020)
 
 FEATURES:
