@@ -813,6 +813,14 @@ func resourceOpennebulaVirtualMachineUpdate(d *schema.ResourceData, meta interfa
 		if err != nil {
 			return err
 		}
+
+		timeout := d.Get("timeout").(int)
+
+		_, err = waitForVMState(vmc, timeout, "RUNNING")
+		if err != nil {
+			return fmt.Errorf(
+				"waiting for virtual machine (ID:%d) to be in state %s: %s", vmc.ID, strings.Join(vmDiskUpdateReadyStates, " "), err)
+		}
 	}
 
 	if d.HasChange("disk") {
@@ -973,7 +981,16 @@ func resourceOpennebulaVirtualMachineUpdate(d *schema.ResourceData, meta interfa
 
 	if d.HasChange("context") {
 
-		log.Printf("[INFO] Update NIC configuration")
+		// wait state to be ready
+		timeout := d.Get("timeout").(int)
+
+		_, err = waitForVMState(vmc, timeout, "RUNNING")
+		if err != nil {
+			return fmt.Errorf(
+				"waiting for virtual machine (ID:%d) to be in state %s: %s", vmc.ID, strings.Join(vmDiskUpdateReadyStates, " "), err)
+		}
+
+		log.Printf("[INFO] Update context configuration")
 
 		tpl := dyn.NewTemplate()
 		contextVec := tpl.AddVector("CONTEXT")
@@ -987,9 +1004,17 @@ func resourceOpennebulaVirtualMachineUpdate(d *schema.ResourceData, meta interfa
 			contextVec.AddPair(keyUp, fmt.Sprint(value))
 		}
 
+		log.Printf("[INFO] Update CONTEXT configuration: %s", tpl.String())
+
 		err := vmc.UpdateConf(tpl.String())
 		if err != nil {
 			return fmt.Errorf("vm updateconf: %s", err)
+		}
+
+		_, err = waitForVMState(vmc, timeout, "RUNNING")
+		if err != nil {
+			return fmt.Errorf(
+				"waiting for virtual machine (ID:%d) to be in state %s: %s", vmc.ID, strings.Join(vmDiskUpdateReadyStates, " "), err)
 		}
 	}
 
@@ -1008,11 +1033,20 @@ func resourceOpennebulaVirtualMachineDelete(d *schema.ResourceData, meta interfa
 		return err
 	}
 
+	// wait state to be ready
+	timeout := d.Get("timeout").(int)
+
+	_, err = waitForVMState(vmc, timeout, "RUNNING")
+	if err != nil {
+		return fmt.Errorf(
+			"waiting for virtual machine (ID:%d) to be in state %s: %s", vmc.ID, strings.Join(vmDiskUpdateReadyStates, " "), err)
+	}
+
 	if err = vmc.TerminateHard(); err != nil {
 		return err
 	}
 
-	timeout := d.Get("timeout").(int)
+	//timeout := d.Get("timeout").(int)
 	ret, err := waitForVMState(vmc, timeout, "DONE")
 	if err != nil {
 
