@@ -1,3 +1,8 @@
+## 0.4.0 (Unreleased)
+
+FEATURES:
+* resources/opennebula_virtual_machine: Optionally preserve NIC ordering
+
 ## 0.3.0 (December 17, 2020)
 
 FEATURES:
