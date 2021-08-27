@@ -1,3 +1,8 @@
+## 0.4.0 (Unreleased)
+
+BUG FIXES:
+* resources/opennebula_virtual_data_center: Fix `zones` flattening and associated tests
+
 ## 0.3.0 (December 17, 2020)
 
 FEATURES:
