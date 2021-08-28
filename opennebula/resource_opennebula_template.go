@@ -104,6 +104,7 @@ func resourceOpennebulaTemplate() *schema.Resource {
 				Optional:    true,
 				Description: "Name of the Group that onws the Template, If empty, it uses caller group",
 			},
+			"lock": lockSchema(),
 		},
 	}
 }
@@ -200,6 +201,10 @@ func resourceOpennebulaTemplateCreate(d *schema.ResourceData, meta interface{}) 
 		}
 	}
 
+	if lock, ok := d.GetOk("lock"); ok {
+		updateLock(lock, tc)
+	}
+
 	return resourceOpennebulaTemplateRead(d, meta)
 }
 
@@ -277,6 +282,10 @@ func resourceOpennebulaTemplateRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
+	if tpl.LockInfos != nil {
+		d.Set("lock", LockLevelToString(tpl.LockInfos.Locked))
+	}
+
 	return nil
 }
 
@@ -346,6 +355,12 @@ func resourceOpennebulaTemplateUpdate(d *schema.ResourceData, meta interface{}) 
 			return err
 		}
 		log.Printf("[INFO] Successfully updated group for Template %s\n", tpl.Name)
+	}
+
+	if d.HasChange("lock") {
+		if lock, ok := d.GetOk("lock"); ok {
+			updateLock(lock, tc)
+		}
 	}
 
 	if d.HasChange("tags") {
