@@ -1,3 +1,12 @@
+## 0.4.0 (Unreleased)
+
+Features:
+
+* resources/opennebula_virtual_machine: Enable locking
+* resources/opennebula_virtual_network: Enable locking
+* resources/opennebula_template: Enable locking
+
+
 ## 0.3.0 (December 17, 2020)
 
 FEATURES:

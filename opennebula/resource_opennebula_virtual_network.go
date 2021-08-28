@@ -296,6 +296,7 @@ func resourceOpennebulaVirtualNetwork() *schema.Resource {
 				Description: "Name of the Group that onws the Virtual Network, If empty, it uses caller group",
 			},
 			"tags": tagsSchema(),
+			"lock": lockSchema(),
 		},
 	}
 }
@@ -500,6 +501,10 @@ func resourceOpennebulaVirtualNetworkCreate(d *schema.ResourceData, meta interfa
 		if err != nil {
 			return err
 		}
+	}
+
+	if lock, ok := d.GetOk("lock"); ok {
+		updateLock(lock, vnc)
 	}
 
 	return resourceOpennebulaVirtualNetworkRead(d, meta)
@@ -722,6 +727,11 @@ func resourceOpennebulaVirtualNetworkRead(d *schema.ResourceData, meta interface
 	if err := d.Set("ar", generateARMapFromStructs(vn.ARs)); err != nil {
 		log.Printf("[WARN] Error setting ar for Virtual Network %x, error: %s", vn.ID, err)
 	}
+
+	if vn.Lock != nil {
+		d.Set("lock", LockLevelToString(vm.Lock.Locked))
+	}
+
 	return nil
 }
 
@@ -905,6 +915,12 @@ func resourceOpennebulaVirtualNetworkUpdate(d *schema.ResourceData, meta interfa
 			return err
 		}
 		log.Printf("[INFO] Successfully updated group for Vnet %s\n", vn.Name)
+	}
+
+	if d.HasChange("lock") {
+		if lock, ok := d.GetOk("lock"); ok {
+			updateLock(lock, vnc)
+		}
 	}
 
 	if d.HasChange("hold_ips") {

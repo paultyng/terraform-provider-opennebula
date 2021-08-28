@@ -148,6 +148,7 @@ func resourceOpennebulaVirtualMachine() *schema.Resource {
 				Optional:    true,
 				Description: "Name of the Group that onws the VM, If empty, it uses caller group",
 			},
+			"lock": lockSchema(),
 		},
 	}
 }
@@ -419,6 +420,10 @@ func resourceOpennebulaVirtualMachineCreate(d *schema.ResourceData, meta interfa
 		}
 	}
 
+	if lock, ok := d.GetOk("lock"); ok {
+		updateLock(lock, vmc)
+	}
+
 	// Customize read step to process disk and NIC from template in a different way.
 	// The goal is to avoid diffs that would trigger unwanted disk/NIC update.
 	if templateID != -1 {
@@ -500,6 +505,10 @@ func resourceOpennebulaVirtualMachineReadCustom(d *schema.ResourceData, meta int
 	err = flattenTags(d, &vm.UserTemplate)
 	if err != nil {
 		return err
+	}
+
+	if vm.LockInfos != nil {
+		d.Set("lock", LockLevelToString(vm.LockInfos.Locked))
 	}
 
 	return nil
@@ -800,6 +809,12 @@ func resourceOpennebulaVirtualMachineUpdate(d *schema.ResourceData, meta interfa
 			return err
 		}
 		log.Printf("[INFO] Successfully updated group for VM %s\n", vm.Name)
+	}
+
+	if d.HasChange("lock") {
+		if lock, ok := d.GetOk("lock"); ok {
+			updateLock(lock, vmc)
+		}
 	}
 
 	if d.HasChange("tags") {
