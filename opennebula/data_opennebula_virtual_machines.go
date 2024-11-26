@@ -197,30 +197,24 @@ func virtualMachinesFilter(d *schema.ResourceData, meta interface{}) ([]*vmSc.VM
 		if nameReg != nil && !nameReg.MatchString(vm.Name) {
 			continue
 		}
-		tplCPU, err := vm.Template.GetCPU()
-		if err != nil {
-			continue
+		if cpuOk {
+			tplCPU, err := vm.Template.GetCPU()
+			if err != nil || tplCPU != cpu.(float64) {
+				continue
+			}
 		}
-		if cpuOk && tplCPU != cpu.(float64) {
-			continue
+		if vcpuOk {
+			tplVCPU, err := vm.Template.GetVCPU()
+			if err != nil || tplVCPU != vcpu.(int) {
+				continue
+			}
 		}
-
-		tplVCPU, err := vm.Template.GetVCPU()
-		if err != nil {
-			continue
+		if memoryOk {
+			tplMemory, err := vm.Template.GetMemory()
+			if err != nil || tplMemory != memory.(int) {
+				continue
+			}
 		}
-		if vcpuOk && tplVCPU != vcpu.(int) {
-			continue
-		}
-
-		tplMemory, err := vm.Template.GetMemory()
-		if err != nil {
-			continue
-		}
-		if memoryOk && tplMemory != memory.(int) {
-			continue
-		}
-
 		if tagsOk && !matchTags(vm.UserTemplate.Template, tags) {
 			continue
 		}

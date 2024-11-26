@@ -172,6 +172,16 @@ func TestAccVirtualMachineDataSource(t *testing.T) {
 					),
 				),
 			},
+			{
+				Config: testAccVirtualMachinesDataSourceNoVCPU,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"data.opennebula_virtual_machines.no_vcpu",
+						"virtual_machines.0.name",
+						"vm-2",
+					),
+				),
+			},
 		},
 	})
 }
@@ -251,7 +261,15 @@ resource "opennebula_virtual_machine" "second_vm" {
 	vcpu = 1
 }
 `
-
+var testAccThirdVirtualMachine = `
+resource "opennebula_virtual_machine" "third_vm" {	
+	name = "vm-2"
+	group = "oneadmin"
+	permissions = "642"
+	memory = 64
+	cpu =  0.2
+}
+`
 var testAccVirtualMachinesDataSourceBasic = testAccFirstVirtualMachine + `
 data "opennebula_virtual_machines" "basic" {
   name_regex = "vm.*"
@@ -366,5 +384,12 @@ data "opennebula_virtual_machines" "static_tags" {
     opennebula_virtual_machine.first_vm,
   	opennebula_virtual_machine.second_vm 
   ]
+}
+`
+var testAccVirtualMachinesDataSourceNoVCPU = testAccThirdVirtualMachine + `
+data "opennebula_virtual_machines" "no_vcpu" {
+  name_regex = "vm.*"
+
+  depends_on = [opennebula_virtual_machine.third_vm]
 }
 `
