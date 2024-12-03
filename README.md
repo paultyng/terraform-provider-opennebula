@@ -46,10 +46,8 @@ More details [here](./website/docs/index.html.markdown).
 
 ## OpenNebula versions support
 
-* `~> 6.8`
-* `~> 6.6`
-* `~> 6.4`
-* `~> 5.12`
+* `~> 6.10` (current)
+* `~> 6.4` (LTS)
 
 See OpenNebula's [Release Policy](https://github.com/OpenNebula/one/wiki/Release-Policy) for more details.
 
@@ -63,4 +61,10 @@ Please refer to [LICENSE](./LICENSE).
 
 ## References
 
-Other Projects about Terraform provider exists. This project has been inspired by [Runtastic](https://github.com/runtastic/terraform-provider-opennebula) and [BlackBerry](https://github.com/blackberry/terraform-provider-opennebula) projects.
+Other Projects about Terraform provider exist. This project has been inspired by [Runtastic](https://github.com/runtastic/terraform-provider-opennebula) and [BlackBerry](https://github.com/blackberry/terraform-provider-opennebula) projects.
+
+## Acknowledgements
+
+Some of the software features included in this repository have been made possible through the funding of the following innovation projects:
+
+* [ONEnextgen](http://onenextgen.eu/) (Grant Agreement UNICO IPCEI-2023-003), supported by the Spanish Ministry for Digital Transformation and Civil Service through the UNICO IPCEI Program, co-funded by the European Union – NextGenerationEU through the Recovery and Resilience Facility (RRF).

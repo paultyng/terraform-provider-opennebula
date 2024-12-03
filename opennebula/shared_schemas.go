@@ -225,6 +225,18 @@ func nicFields() map[string]*schema.Schema {
 				Type: schema.TypeInt,
 			},
 		},
+		"method": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"gateway": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"dns": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
 		"network_mode_auto": {
 			Type:     schema.TypeBool,
 			Optional: true,
@@ -584,6 +596,12 @@ func makeNICVector(nicConfig map[string]interface{}) *shared.NIC {
 		case "security_groups":
 			nicSecGroups := ArrayToString(v.([]interface{}), ",")
 			nic.Add(shared.SecurityGroups, nicSecGroups)
+		case "method":
+			nic.Add(shared.Method, v.(string))
+		case "gateway":
+			nic.Add(shared.Gateway, v.(string))
+		case "dns":
+			nic.Add(shared.DNS, v.(string))
 		case "network_mode_auto":
 			if v.(bool) {
 				nic.Add(shared.NetworkMode, "auto")
@@ -592,7 +610,6 @@ func makeNICVector(nicConfig map[string]interface{}) *shared.NIC {
 			nic.Add(shared.SchedRequirements, v.(string))
 		case "sched_rank":
 			nic.Add(shared.SchedRank, v.(string))
-
 		}
 	}
 
@@ -635,13 +652,14 @@ func addGraphic(tpl *vm.Template, graphics []interface{}) {
 				case "passwd":
 					tpl.AddIOGraphic(vmk.Passwd, v.(string))
 				case "random_passwd":
-					// Convert bool to string
-					tpl.AddIOGraphic(vmk.RandomPassword, map[bool]string{true: "YES", false: "NO"}[v.(bool)])
+					// only set random_passwd if it's set to true -- older OpenNebula versions will consider any
+					// non-zero string as a yes
+					if v.(bool) {
+						tpl.AddIOGraphic(vmk.RandomPassword, "YES")
+					}
 				}
-
 			}
 		}
-
 	}
 }
 
@@ -857,6 +875,10 @@ func flattenNIC(nic shared.NIC) map[string]interface{} {
 		}
 	}
 
+	method, _ := nic.Get(shared.Method)
+	gateway, _ := nic.Get(shared.Gateway)
+	dns, _ := nic.Get(shared.DNS)
+
 	return map[string]interface{}{
 		"ip":                 ip,
 		"mac":                mac,
@@ -866,6 +888,9 @@ func flattenNIC(nic shared.NIC) map[string]interface{} {
 		"model":              model,
 		"virtio_queues":      virtioQueues,
 		"security_groups":    sg,
+		"method":             method,
+		"gateway":            gateway,
+		"dns":                dns,
 		"network_mode_auto":  networkModeBool,
 		"sched_requirements": schedReqs,
 		"sched_rank":         schedRank,
